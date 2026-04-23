@@ -18,7 +18,8 @@ jobs:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
       - name: Build Docker Image
-        run: docker build -t registry.digitalocean.com/mi-ecommerce-reviews-proyecto/review-service:${{ github.sha }} .
+        # Agregamos la ruta ./Service/reviews al final para que encuentre el Dockerfile
+        run: docker build -t registry.digitalocean.com/mi-ecommerce-reviews-proyecto/review-service:${{ github.sha }} ./Service/reviews
 
       - name: Log in to DigitalOcean Registry
         run: doctl registry login --expiry-seconds 600
@@ -29,6 +30,6 @@ jobs:
       - name: Update Kubernetes Deployment
         run: |
           doctl kubernetes cluster kubeconfig save ${{ secrets.DOKS_CLUSTER_ID }}
-          # Cambiamos la imagen en el YAML dinámicamente usando el ID del commit de GitHub
-          sed -i 's|image:.*|image: registry.digitalocean.com/mi-ecommerce-reviews-proyecto/review-service:${{ github.sha }}|' deployment.yaml
-          kubectl apply -f deployment.yaml
+          # Ajustamos la ruta para que encuentre el deployment.yaml dentro de las carpetas
+          sed -i 's|image:.*|image: registry.digitalocean.com/mi-ecommerce-reviews-proyecto/review-service:${{ github.sha }}|' ./Service/reviews/deployment.yaml
+          kubectl apply -f ./Service/reviews/deployment.yaml
