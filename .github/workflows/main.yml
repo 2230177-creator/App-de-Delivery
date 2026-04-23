@@ -8,11 +8,6 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    # Esto le dice a GitHub que todos los comandos 'run' se ejecuten dentro de esa carpeta
-    defaults:
-      run:
-        working-directory: ./Service/reviews
-    
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -23,8 +18,8 @@ jobs:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
       - name: Build Docker Image
-        # Ahora el punto (.) se refiere a /Service/reviews/ automáticamente
-        run: docker build -t registry.digitalocean.com/mi-ecommerce-reviews-proyecto/review-service:${{ github.sha }} .
+        # Aquí le decimos explícitamente que el contexto es la carpeta reviews
+        run: docker build -t registry.digitalocean.com/mi-ecommerce-reviews-proyecto/review-service:${{ github.sha }} ./Service/reviews
 
       - name: Log in to DigitalOcean Registry
         run: doctl registry login --expiry-seconds 600
@@ -35,5 +30,6 @@ jobs:
       - name: Update Kubernetes Deployment
         run: |
           doctl kubernetes cluster kubeconfig save ${{ secrets.DOKS_CLUSTER_ID }}
-          sed -i 's|image:.*|image: registry.digitalocean.com/mi-ecommerce-reviews-proyecto/review-service:${{ github.sha }}|' deployment.yaml
-          kubectl apply -f deployment.yaml
+          # Usamos la ruta completa para encontrar el deployment.yaml
+          sed -i 's|image:.*|image: registry.digitalocean.com/mi-ecommerce-reviews-proyecto/review-service:${{ github.sha }}|' ./Service/reviews/deployment.yaml
+          kubectl apply -f ./Service/reviews/deployment.yaml
